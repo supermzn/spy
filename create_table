@@ -1,0 +1,7 @@
+CREATE TABLE Processes(id INT PRIMARY_KEY NOT_NULL AUTO_INCREMENT, name VARCHAR(25) NOT NULL, time INT);
+CREATE TABLE Webpages(id INT PRIMARY_KEY NOT_NULL AUTO_INCREMENT, name VARCHAR(25) NOT NULL, url VARCHAR(225), time INT);
+CREATE TABLE Users(id INT PRIMARY_KEY NOT_NULL AUTO_INCREMENT, name VARCHAR(25) NOT NULL, password VARCHAR(50));
+CREATE TABLE Preferred_processes(process_id INT NOT_NULL, user_id INT NOT_NULL, allowed_time INT);
+CREATE TABLE Preferred_webpages(webpage_id INT NOT_NULL, user_id INT NOT_NULL, allowed_time INT);
+CREATE TABLE Banned_processes(pocess_id INT NOT_NULL, user_id INT NOT_NULL, allowed_time INT);
+CREATE TABLE Banned_webpages(webpage_id INT NOT_NULL, user_id INT NOT_NULL, allowed_time INT);
