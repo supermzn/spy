@@ -13,6 +13,7 @@ INSERT INTO Processes(id, name, user_id, time) VALUES(4, 'shotwell', 2, 15);
 INSERT INTO Processes(id, name, user_id, time) VALUES(5, 'gnome-mines', 2, 8);
 INSERT INTO Processes(id, name, user_id, time) VALUES(6, 'eclipse', 3, 74);
 INSERT INTO Processes(id, name, user_id, time) VALUES(7, 'firefox', 3, 52);
+INSERT INTO Processes(id, name, user_id, time) VALUES(4, 'shotwell', 1, 9);
 
 INSERT INTO Banned_processes(name, user_id) VALUES('sol', 2);
 INSERT INTO Banned_processes(name, user_id) VALUES('supertuxcart', 3);
@@ -23,3 +24,12 @@ INSERT INTO Banned_processes(name, user_id) VALUES('gnome-mines', 2);
 INSERT INTO Banned_processes(name, user_id) VALUES('firefox', 3);
 
 SELECT Processes.name, Processes.user_id, Processes.time FROM Processes LEFT JOIN Banned_processes WHERE Processes.name = Banned_processes.name AND Processes.user_id = Banned_processes.user_id;
+
+SELECT COUNT(ID) FROM Processes;
+SELECT SUM(time) FROM Processes;
+SELECT AVG(time) FROM Processes;
+SELECT DISTINCT name FROM Processes;
+SELECT MIN(time) FROM Processes;
+SELECT MAX(time) FROM Processes;
+
+SELECT user_id, AVG(time) FROM Processes GROUP BY user_id HAVING AVG(time) > 10;
