@@ -1,19 +1,24 @@
-CREATE TABLE Processes(id INT PRIMARY_KEY NOT_NULL AUTO_INCREMENT, name VARCHAR(25) NOT NULL, user_id INT NOT_NULL, time INT);
-CREATE TABLE Webpages(id INT PRIMARY_KEY NOT_NULL AUTO_INCREMENT, name VARCHAR(25) NOT NULL, url VARCHAR(225), time INT);
-CREATE TABLE Users(id INT PRIMARY_KEY NOT_NULL AUTO_INCREMENT, name VARCHAR(25) NOT NULL, password VARCHAR(50));
-CREATE TABLE Preferred_processes(process_id INT NOT_NULL, user_id INT NOT_NULL, allowed_time INT);
-CREATE TABLE Preferred_webpages(webpage_id INT NOT_NULL, user_id INT NOT_NULL, allowed_time INT);
-CREATE TABLE Banned_processes(name VARCHAR(30), user_id INT NOT_NULL, allowed_time INT);
-CREATE TABLE Banned_webpages(name VARCHAR(30), user_id INT NOT_NULL, allowed_time INT);
+CREATE TABLE Processes(id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, name VARCHAR(25) NOT NULL, user_id INT NOT NULL, time INT);
+CREATE TABLE Webpages(id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, name VARCHAR(25) NOT NULL, url VARCHAR(225), time INT);
+CREATE TABLE Users(id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, name VARCHAR(25) NOT NULL, password VARCHAR(50));
+CREATE TABLE Preferred_processes(process_id INT NOT NULL, user_id INT NOT NULL, allowed_time INT);
+CREATE TABLE Preferred_webpages(webpage_id INT NOT NULL, user_id INT NOT NULL, allowed_time INT);
+CREATE TABLE Banned_processes(name VARCHAR(30), user_id INT NOT NULL, allowed_time INT);
+CREATE TABLE Banned_webpages(name VARCHAR(30), user_id INT NOT NULL, allowed_time INT);
 
-INSERT INTO Processes(id, name, user_id, time) VALUES(1, 'sqlite', 3, 19);
-INSERT INTO Processes(id, name, user_id, time) VALUES(2, 'spotify', 3, 84);
-INSERT INTO Processes(id, name, user_id, time) VALUES(3, 'psensor', 3, 34);
-INSERT INTO Processes(id, name, user_id, time) VALUES(4, 'shotwell', 2, 15);
-INSERT INTO Processes(id, name, user_id, time) VALUES(5, 'gnome-mines', 2, 8);
-INSERT INTO Processes(id, name, user_id, time) VALUES(6, 'eclipse', 3, 74);
-INSERT INTO Processes(id, name, user_id, time) VALUES(7, 'firefox', 3, 52);
-INSERT INTO Processes(id, name, user_id, time) VALUES(4, 'shotwell', 1, 9);
+INSERT INTO Users(name) VALUES ('Adam');
+INSERT INTO Users(name) VALUES ('Borys');
+INSERT INTO Users(name) VALUES ('Czarek');
+INSERT INTO Users(name) VALUES ('Dominik');
+
+INSERT INTO Processes(name, user_id, time) VALUES('sqlite', 3, 19);
+INSERT INTO Processes(name, user_id, time) VALUES('spotify', 3, 84);
+INSERT INTO Processes(name, user_id, time) VALUES('psensor', 3, 34);
+INSERT INTO Processes(name, user_id, time) VALUES('shotwell', 2, 15);
+INSERT INTO Processes(name, user_id, time) VALUES('gnome-mines', 2, 8);
+INSERT INTO Processes(name, user_id, time) VALUES('eclipse', 3, 74);
+INSERT INTO Processes(name, user_id, time) VALUES('firefox', 3, 52);
+INSERT INTO Processes(name, user_id, time) VALUES('shotwell', 1, 9);
 
 INSERT INTO Banned_processes(name, user_id) VALUES('sol', 2);
 INSERT INTO Banned_processes(name, user_id) VALUES('supertuxcart', 3);
@@ -23,7 +28,7 @@ INSERT INTO Banned_processes(name, user_id, allowed_time) VALUES('virtualbox', 3
 INSERT INTO Banned_processes(name, user_id) VALUES('gnome-mines', 2);
 INSERT INTO Banned_processes(name, user_id) VALUES('firefox', 3);
 
-SELECT Processes.name, Processes.user_id, Processes.time FROM Processes LEFT JOIN Banned_processes WHERE Processes.name = Banned_processes.name AND Processes.user_id = Banned_processes.user_id;
+SELECT p.name, p.user_id, p.time FROM Processes p LEFT JOIN Banned_processes b ON p.name = b.name AND p.user_id = b.user_id;
 
 SELECT COUNT(ID) FROM Processes;
 SELECT SUM(time) FROM Processes;
@@ -33,3 +38,6 @@ SELECT MIN(time) FROM Processes;
 SELECT MAX(time) FROM Processes;
 
 SELECT user_id, AVG(time) FROM Processes GROUP BY user_id HAVING AVG(time) > 10;
+
+
+
