@@ -1,0 +1,2 @@
+ALTER TABLE Banned_processes ADD FULLTEXT (name);
+SELECT name FROM Banned_processes WHERE MATCH (name) AGAINST ('+gnome -gtk' IN BOOLEAN MODE);
