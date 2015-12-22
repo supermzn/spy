@@ -28,6 +28,8 @@ INSERT INTO Banned_processes(name, user_id, allowed_time) VALUES('virtualbox', 3
 INSERT INTO Banned_processes(name, user_id) VALUES('gnome-mines', 2);
 INSERT INTO Banned_processes(name, user_id) VALUES('firefox', 3);
 
+UPDATE Banned_processes SET allowed_time=0 WHERE allowed_time IS NULL;
+
 SELECT p.name, p.user_id, p.time FROM Processes p LEFT JOIN Banned_processes b ON p.name = b.name AND p.user_id = b.user_id;
 
 SELECT COUNT(ID) FROM Processes;
