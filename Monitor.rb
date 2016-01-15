@@ -74,7 +74,7 @@ def declared_procs(list)
 end
 
 	# moniotring of processes
-def monitor(user_id)
+def monitor_processes(user_id)
 	if !user_id
 	 	puts "Nie zalogowano poprawnie!"
 	 	return
@@ -86,7 +86,7 @@ def monitor(user_id)
 		`process_id` int NOT NULL, \
 		`started_at` TIMESTAMP NOT NULL, \
 		`elapsed_time` TIME NOT NULL, \
-		`avg_memory` FLOAT NOT NULL, \
+		`memory` FLOAT NOT NULL, \
 		`cpu` FLOAT NOT NULL, \
 		FOREIGN KEY (user_id) REFERENCES Users(id), \
 		FOREIGN KEY (process_id) REFERENCES Processes(id) \
@@ -101,12 +101,13 @@ def monitor(user_id)
 			declared_procs(unique_procs(get_procs_list)).each do |p|
 				p.show
 				proc_id = get_id(p)
-				rs = con.query("SELECT elapsed_time FROM Processes_log WHERE user_id=#{user_id} AND process_id=\'#{proc_id}\';")#.fetch_row[0]
+				rs = con.query("SELECT elapsed_time FROM Processes_log WHERE \
+				user_id=#{user_id} AND process_id=\'#{proc_id}\' AND DATE(started_at)=DATE(NOW());")#.fetch_row[0]
 				etime = rs.fetch_row
 				if etime.nil?
 					start_time = con.query("SELECT SUBTIME(NOW(), \'#{p.elapsed_time}\');")
-				con.query("INSERT INTO Processes_log(user_id, process_id, started_at, elapsed_time) \
-						VALUES (#{user_id}, #{proc_id}, \'#{start_time.fetch_row[0]}\', \'#{p.elapsed_time}\');")
+					con.query("INSERT INTO Processes_log(user_id, process_id, started_at, elapsed_time, memory, cpu) \
+						VALUES (#{user_id}, #{proc_id}, \'#{start_time.fetch_row[0]}\', \'#{p.elapsed_time}\', \'#{p.memory}\', \'#{p.cpu}\');")
 				else
 					t = etime[0]
 					while tmp = rs.fetch_row
@@ -122,12 +123,15 @@ def monitor(user_id)
 					# puts "last_time=#{last_time}, new_time=#{new_time}, time_difference=#{time_difference}"
 					if time_difference >= 0
 						start_time = con.query("SELECT SUBTIME(NOW(), \'#{p.elapsed_time}\');")
-						con.query("INSERT INTO Processes_log(user_id, process_id, started_at, elapsed_time) \
-							VALUES (#{user_id}, #{proc_id}, \'#{start_time.fetch_row[0]}\', \'#{p.elapsed_time}\');")
+						con.query("INSERT INTO Processes_log(user_id, process_id, started_at, elapsed_time, memory, cpu) \
+							VALUES (#{user_id}, #{proc_id}, \'#{start_time.fetch_row[0]}\', \'#{p.elapsed_time}\', \'#{p.memory}\', \'#{p.cpu}\');")
 					else
 						start_time = con.query("SELECT SUBTIME(NOW(), \'#{p.elapsed_time}\');").fetch_row
 						n = start_time[0].size
-						con.query("UPDATE Processes_log SET elapsed_time=\'#{p.elapsed_time}\', started_at=\'#{start_time[0]}\' WHERE user_id=\'#{user_id}\' AND process_id=\'#{proc_id}\' AND started_at LIKE \'#{start_time[0][0..n-3]}%\';")
+						con.query("UPDATE Processes_log SET elapsed_time=\'#{p.elapsed_time}\', \
+							started_at=\'#{start_time[0]}\', memory=\'#{p.memory}\', cpu=\'#{p.cpu}\' \
+							WHERE user_id=\'#{user_id}\' AND process_id=\'#{proc_id}\' AND \
+							started_at LIKE \'#{start_time[0][0..n-3]}%\';")
 					end
 
 				end						
@@ -173,6 +177,7 @@ def get_etime(proc)
 end
 
 
-monitor(login)
+
+monitor_processes(login)
 
 # select Processes_log.user_id, Processes.command, Processes_log.started_at from Processes_log inner join Processes ON Processes.id=Processes_log.process_id;
