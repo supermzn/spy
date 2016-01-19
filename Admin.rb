@@ -240,13 +240,7 @@ def edit_prefered_process(preference)
 			puts "Taka para użytkownik-proces już istnieje!"
 		end		
 	end
-	# rs = con.query("SELECT * FROM #{preference}_processes WHERE process_id=#{proc_id} AND user_id=#{user_id};")
-	# if rs.fetch_hash.nil?
-	# 	con.query("UPDATE #{preference}_processes SET process_id=\'#{proc_id_new}\', \
-	# 		user_id=\'#{user_id_new}\', time=\'#{pref_time_new}\' WHERE process_id=\'#{proc_id}\' AND user_id=\'#{user_id}\';")
-	# else
-	# 	puts "Taka para użytkownik-proces już istnieje!"
-	# end
+
 	con.close
 end
 
@@ -260,6 +254,111 @@ def delete_prefered_process(preference)
 	con = Mysql.new 'localhost', 'spy', 'db%SPY16'
 	con.query("USE Spy")
 	rs = con.query("SELECT * FROM #{preference}_processes WHERE process_id=\'#{user_id}\' AND process_id=\'#{proc_id}\';")
+	pr = rs.fetch_hash
+	if pr.nil?
+		puts 'Nie ma takiego ustawienia!'
+		con.close
+		return
+	end	
+end
+
+def add_preferred_url(preference)
+	con = Mysql.new 'localhost', 'spy', 'db%SPY16'
+	con.query("USE Spy")
+	puts 'Oto dostępne strony oraz użytkownicy. Podaj ich ID oraz preferowany czas.'
+	print_domains
+	print_users
+	print "ID użytkownika: "
+	user_id = gets.chomp
+	print "ID domeny: "
+	url_id = gets.chomp
+	print "Adekwatny czas[HH:MM]: "
+	pref_time = gets.chomp
+	if pref_time.empty?
+		pref_time = "00:00"
+	elsif (/([01]?[0-9]|2[0-3]):[0-5][0-9]/ =~ pref_time) != 0
+		puts 'Niepoprawnie podany czas!'
+		return
+	end
+	con.query("CREATE TABLE IF NOT EXISTS `#{preference}_domains` ( \
+		`domain_id` int NOT NULL, \
+		`user_id` int NOT NULL, \
+		`time` TIME NOT NULL DEFAULT '00:00' \
+	);")
+	rs = con.query("SELECT * FROM #{preference}_domains WHERE domain_id=#{url_id} AND user_id=#{user_id};")
+	if rs.fetch_hash.nil?
+		con.query("INSERT INTO #{preference}_domains VALUES(\'#{url_id}\', \'#{user_id}\', \'#{pref_time}\');")
+		puts "Dodano pomyślnie"
+	else
+		puts "Taka para użytkownik-domena już istnieje!"
+	end	
+	con.close
+end
+
+def edit_prefered_url(preference)
+	puts 'Oto dostępne strony oraz użytkownicy. Podaj ich ID oraz preferowany czas.'
+	print_domains_users(preference)
+	print "ID użytkownika: "
+	user_id = gets.chomp
+	print "ID domeny: "
+	url_id = gets.chomp
+	con = Mysql.new 'localhost', 'spy', 'db%SPY16'
+	con.query("USE Spy")
+	rs = con.query("SELECT * FROM #{preference}_domains WHERE \
+		user_id=#{user_id} AND domain_id=#{url_id};")
+	pr = rs.fetch_hash
+	if pr.nil?
+		puts 'Nie ma takiego ustawienia!'
+		con.close
+		return
+	end
+	puts 'Teraz wprowadź zmiany odpowiednich wartości [ENTER jeśli bez zmian]'
+	print "ID użytkownika: "
+	user_id_new = gets.chomp
+	if user_id_new.empty?
+		user_id_new = pr["user_id"]
+	end
+	print "ID domeny: "
+	url_id_new = gets.chomp
+	if url_id_new.empty?
+		url_id_new = pr["process_id"]	
+	end
+	print "Adekwatny czas[HH:MM]: "
+	pref_time_new = gets.chomp
+	if pref_time_new.empty?
+		pref_time_new = pr["time"]
+	elsif (/([01]?[0-9]|2[0-3]):[0-5][0-9]/ =~ pref_time_new) != 0
+		puts 'Niepoprawnie podany czas! Nie zmieniono.'
+		pref_time_new = pr["time"]
+	end
+	if user_id == user_id_new.to_i and url_id == url_id_new.to_i
+		con.query("UPDATE #{preference}_domains SET time=\'#{pref_time_new}\' WHERE \
+			domain_id=\'#{url_id_new}\' AND	user_id=\'#{user_id_new}\';")
+		puts 'Zmiana wprowadzona pomyślnie'
+	else
+		rs = con.query("SELECT * FROM #{preference}_domains WHERE domain_id=#{url_id} AND user_id=#{user_id};")
+		if rs.fetch_hash.nil?
+			con.query("UPDATE #{preference}_domains SET domain_id=\'#{url_id_new}\', \
+				user_id=\'#{user_id_new}\', time=\'#{pref_time_new}\' WHERE domain_id=\'#{url_id}\' AND user_id=\'#{user_id}\';")
+			puts 'Zmiana wprowadzona pomyślnie'
+		else
+			puts "Taka para użytkownik-proces już istnieje!"
+		end		
+	end
+
+	con.close
+end
+
+def delete_prefered_url(preference)
+	puts 'Oto dostępne ustawienia domen z użytkownikami. Podaj ich ID.'
+	print_domains_users(preference)
+	print "ID użytkownika: "
+	user_id = gets.chomp
+	print "ID domeny: "
+	url_id = gets.chomp
+	con = Mysql.new 'localhost', 'spy', 'db%SPY16'
+	con.query("USE Spy")
+	rs = con.query("SELECT * FROM #{preference}_domains WHERE domain_id=\'#{url_id}\' AND domain_id=\'#{url_id}\';")
 	pr = rs.fetch_hash
 	if pr.nil?
 		puts 'Nie ma takiego ustawienia!'
@@ -282,6 +381,21 @@ def print_processes
 	puts "==============================="
 end
 
+def print_domains
+	con = Mysql.new 'localhost', 'spy', 'db%SPY16'
+	con.query("USE Spy")
+	con.query("CREATE TABLE IF NOT EXISTS Domains(id INT PRIMARY KEY AUTO_INCREMENT, domain VARCHAR(50), description TEXT);")
+	puts 'Oto dostępne domeny:'
+	puts "==============================="
+	rs = con.query("SELECT * FROM Domains;")
+	printf "%s\t%-20s %s\n", 'ID', 'url', 'tags'
+	while row = rs.fetch_hash
+		printf "%s\t%-20s %s\n", row["id"], row["domain"], row["description"]
+	end
+	con.close
+	puts "==============================="
+end
+
 def print_users
 	con = Mysql.new 'localhost', 'spy', 'db%SPY16'
 	con.query("USE Spy")
@@ -291,6 +405,25 @@ def print_users
 	printf "%s\t%-20s %s\n", 'ID', 'name', 'tags'
 	while row = rs.fetch_hash
 		printf "%s\t%-15s %s\n", row["id"], row["name"], row["description"]
+	end
+	con.close
+	puts "==============================="
+end
+
+def print_domains_users(preference)
+	con = Mysql.new 'localhost', 'spy', 'db%SPY16'
+	con.query("USE Spy")
+			con.query("CREATE TABLE IF NOT EXISTS `#{preference}_domains` ( \
+		`domain_id` int NOT NULL, \
+		`user_id` int NOT NULL, \
+		`time` TIME NOT NULL DEFAULT '00:00' \
+	);")
+	puts 'Oto dostępne ustawienia:'
+	puts "==============================="	
+	rs = con.query("SELECT * FROM #{preference}_domains;")
+	printf "%s\t\t%s\t\t%s\n", 'UrlID', 'UserId', 'TIME'
+	while row = rs.fetch_hash
+		printf "%s\t\t%s\t\t%s\n", row["url_id"], row["user_id"], row["time"]
 	end
 	con.close
 	puts "==============================="
@@ -310,19 +443,93 @@ def print_processes_users(preference)
 	puts "==============================="
 end
 
+def add_url
+	con = Mysql.new 'localhost', 'spy', 'db%SPY16'
+	con.query("USE Spy")
+	con.query("CREATE TABLE IF NOT EXISTS Domains(id INT PRIMARY KEY AUTO_INCREMENT, domain VARCHAR(50), description TEXT);")
+	print 'Podaj domenę: '
+	url = gets.chomp
+	print 'Dodaj tagi [opcjonalne]: '
+	tags = gets.chomp
+	con.query("INSERT INTO Domains(domain, description) VALUES(\'#{url}\', \'#{tags}\')")
+	puts 'Dodano domenę pomyślnie'
+	con.close
+end
 
-def menu_helper(pref)
+def edit_url
+	print_domains
+	print 'Podaj ID domeny: '
+	id = gets.chomp.to_i
+	con = Mysql.new 'localhost', 'spy', 'db%SPY16'
+	con.query("USE Spy")
+	rs = con.query("SELECT * FROM Domains WHERE id=\'#{id}\';")
+	ur = rs.fetch_hash
+	if ur.nil?
+		puts 'Nie ma takiej domeny!'
+		con.close
+		return
+	end
+	print 'Podaj nowy adres: '
+	url = gets.chomp
+	if !url.empty?
+		con.query("UPDATE Domains SET domain=\'#{url}\' WHERE id=\'#{id}\';")
+		puts 'Zmieniono domenę'
+	end
+	print 'Podaj tagi: '
+	tags = gets.chomp
+	if !tags.empty?
+		con.query("UPDATE Domains SET description=\'#{tags}\' WHERE id=\'#{id}\';")
+		puts 'Zmieniono tagi'
+	end
+	con.close
+end
+
+def delete_url
+	print_domains
+	print 'Podaj ID domeny: '
+	id = gets.chomp.to_i
+	con = Mysql.new 'localhost', 'spy', 'db%SPY16'
+	con.query("USE Spy")
+	rs = con.query("SELECT * FROM Domains WHERE id=\'#{id}\';")
+	us = rs.fetch_hash
+	if us.nil?
+		puts 'Nie ma takiej domeny!'
+		con.close
+		return
+	end
+	con.query("DELETE FROM Domains WHERE id=\'#{id}\';")
+	puts 'Usunięto pomyślnie'
+	con.close	
+end
+
+
+def menu_helper_proc(pref)
 		puts '1 - dodaj proces [domyślne]'
 		puts '2 - edytuj proces'
 		puts '3 - usuń proces'
 		input = gets.chomp.to_i
 		case input
 		when 0, 1
-			add_prefered_process(pref)
+			add_preferred_process(pref)
 		when 2
-			edit_prefered_process(pref)
+			edit_preferred_process(pref)
 		when 3
-			delete_prefered_process(pref)			
+			delete_preferred_process(pref)			
+		end		
+end
+
+def menu_helper_www(pref)
+		puts '1 - dodaj domenę [domyślne]'
+		puts '2 - edytuj domenę'
+		puts '3 - usuń domenę'
+		input = gets.chomp.to_i
+		case input
+		when 0, 1
+			add_preferred_url(pref)
+		when 2
+			edit_preferred_url(pref)
+		when 3
+			delete_preferred_url(pref)			
 		end		
 end
 
@@ -332,6 +539,9 @@ def menu
 	puts '2 - Zarządzaj zdefiniowanymi procesami'
 	puts '3 - Zarządzaj preferowanymi procesami'
 	puts '4 - Zarządzaj zakazanymi procesami'
+	puts '5 - Zarządzaj zdefiniowanymi domenami'
+	puts '6 - Zarządzaj preferowanymi domenami'
+	puts '7 - Zarządzaj zakazanymi domenami'
 
 	input = gets.chomp.to_i
 	case input
@@ -365,11 +575,31 @@ def menu
 			
 	when 3
 		pref = "Preferred"
-		menu_helper(pref)
+		menu_helper_proc(pref)
 
 	when 4
 		pref = "Banned"
-		menu_helper(pref)
+		menu_helper_proc(pref)
+
+	when 5
+		puts '1 - dodaj domenę [domyślne]'
+		puts '2 - edytuj domenę'
+		puts '3 - usuń domenę'
+		input = gets.chomp.to_i
+		case input
+		when 0, 1
+			add_url
+		when 2
+			edit_url
+		when 3
+			delete_url			
+		end
+	when 6
+		pref = "Preferred"
+		menu_helper_www(pref)
+	when 7
+		pref = "Banned"			
+		menu_helper_www(pref)
 	else
 		puts "zły wybór"				
 	end
