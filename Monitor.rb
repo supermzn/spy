@@ -214,4 +214,3 @@ end
 
 monitor(login)
 
-# select Processes_log.user_id, Processes.command, Processes_log.started_at from Processes_log inner join Processes ON Processes.id=Processes_log.process_id;

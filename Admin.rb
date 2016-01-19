@@ -190,7 +190,7 @@ def add_preferred_process(preference)
 	con.close
 end
 
-def edit_prefered_process(preference)
+def edit_preferred_process(preference)
 	puts 'Oto dostępne procesy oraz użytkownicy. Podaj ich ID.'
 	print_processes_users(preference)
 	print "ID użytkownika: "
@@ -231,7 +231,7 @@ def edit_prefered_process(preference)
 			process_id=\'#{proc_id_new}\' AND	user_id=\'#{user_id_new}\';")
 		puts 'Zmiana wprowadzona pomyślnie'
 	else
-		rs = con.query("SELECT * FROM #{preference}_processes WHERE process_id=#{proc_id} AND user_id=#{user_id};")
+		rs = con.query("SELECT * FROM #{preference}_processes WHERE process_id=#{proc_id_new} AND user_id=#{user_id_new};")
 		if rs.fetch_hash.nil?
 			con.query("UPDATE #{preference}_processes SET process_id=\'#{proc_id_new}\', \
 				user_id=\'#{user_id_new}\', time=\'#{pref_time_new}\' WHERE process_id=\'#{proc_id}\' AND user_id=\'#{user_id}\';")
@@ -244,7 +244,7 @@ def edit_prefered_process(preference)
 	con.close
 end
 
-def delete_prefered_process(preference)
+def delete_preferred_process(preference)
 	puts 'Oto dostępne ustawienia procesów z użytkownikami. Podaj ich ID.'
 	print_processes_users(preference)
 	print "ID użytkownika: "
@@ -295,13 +295,13 @@ def add_preferred_url(preference)
 	con.close
 end
 
-def edit_prefered_url(preference)
+def edit_preferred_url(preference)
 	puts 'Oto dostępne strony oraz użytkownicy. Podaj ich ID oraz preferowany czas.'
 	print_domains_users(preference)
 	print "ID użytkownika: "
-	user_id = gets.chomp
+	user_id = gets.chomp.to_i
 	print "ID domeny: "
-	url_id = gets.chomp
+	url_id = gets.chomp.to_i
 	con = Mysql.new 'localhost', 'spy', 'db%SPY16'
 	con.query("USE Spy")
 	rs = con.query("SELECT * FROM #{preference}_domains WHERE \
@@ -353,9 +353,9 @@ def delete_prefered_url(preference)
 	puts 'Oto dostępne ustawienia domen z użytkownikami. Podaj ich ID.'
 	print_domains_users(preference)
 	print "ID użytkownika: "
-	user_id = gets.chomp
+	user_id = gets.chomp.to_i
 	print "ID domeny: "
-	url_id = gets.chomp
+	url_id = gets.chomp.to_i
 	con = Mysql.new 'localhost', 'spy', 'db%SPY16'
 	con.query("USE Spy")
 	rs = con.query("SELECT * FROM #{preference}_domains WHERE domain_id=\'#{url_id}\' AND domain_id=\'#{url_id}\';")
@@ -419,11 +419,11 @@ def print_domains_users(preference)
 		`time` TIME NOT NULL DEFAULT '00:00' \
 	);")
 	puts 'Oto dostępne ustawienia:'
-	puts "==============================="	
+	puts "==print_domains_============================="	
 	rs = con.query("SELECT * FROM #{preference}_domains;")
 	printf "%s\t\t%s\t\t%s\n", 'UrlID', 'UserId', 'TIME'
 	while row = rs.fetch_hash
-		printf "%s\t\t%s\t\t%s\n", row["url_id"], row["user_id"], row["time"]
+		printf "%s\t\t%s\t\t%s\n", row["domain_id"], row["user_id"], row["time"]
 	end
 	con.close
 	puts "==============================="
@@ -441,6 +441,31 @@ def print_processes_users(preference)
 	end
 	con.close
 	puts "==============================="
+end
+
+def print_processes_report
+	con = Mysql.new 'localhost', 'spy', 'db%SPY16'
+	con.query("USE Spy")
+	puts "Aktywność pracowników: "
+	printf "%s\t%-20s\t%s\t%s\t%s\n", 'Imię', 'Proces', 'Zlecony czas', 'Czas zmierzony', 'Rozpoczęto'
+	rs = con.query("SELECT * FROM Processes_report LIMIT 20;")
+	while row = rs.fetch_row
+		printf "%s\t%-20s\t%s\t%s\t%s\n", row[0], row[1], row[2], row[3], row[4]
+	end
+	con.close
+end
+
+def print_www_report
+	con = Mysql.new 'localhost', 'spy', 'db%SPY16'
+	con.query("USE Spy")
+	puts "Aktywność pracowników w internecie"
+	rs = con.query("SELECT * FROM Websites_report limit 30;")
+	printf "%s\t%-25s%s\n", 'Imię', 'Adres', 'Ilość'
+	while row = rs.fetch_row
+		printf "%s\t%-25s%s\n", row[0], row[1], row[2]
+	end
+	con.close
+
 end
 
 def add_url
@@ -542,6 +567,8 @@ def menu
 	puts '5 - Zarządzaj zdefiniowanymi domenami'
 	puts '6 - Zarządzaj preferowanymi domenami'
 	puts '7 - Zarządzaj zakazanymi domenami'
+	puts '8 - Raport z aktywności procesów'
+	puts '9 - Raport z aktywności www'
 
 	input = gets.chomp.to_i
 	case input
@@ -600,9 +627,72 @@ def menu
 	when 7
 		pref = "Banned"			
 		menu_helper_www(pref)
+	when 8
+		print_processes_report
+	when 9
+		print_www_report			
 	else
 		puts "zły wybór"				
 	end
 end
 
+# def sql_functions
+# 	con = Mysql.new 'localhost', 'spy', 'db%SPY16'
+# 	con.query("USE Spy")
+# 	literal =  "DROP FUNCTION IF EXISTS userName; \ 
+# 		DELIMITER // \ 
+# 		CREATE FUNCTION userName (user int) \ 
+# 		RETURNS varchar(30) \ 
+# 		BEGIN  \ 
+# 			DECLARE result varchar(30); \ 
+# 			SELECT name into result FROM Users WHERE id=user; \
+# 			RETURN result; \
+			
+# 		END // \
+# 		DELIMITER ; \
+
+
+# 		DROP FUNCTION IF EXISTS procCommand; \
+# 		DELIMITER // \
+# 		CREATE FUNCTION procCommand (process int) \ 
+# 		RETURNS varchar(30) \
+# 		BEGIN \
+# 			DECLARE result varchar(30); \
+# 			SELECT command into result FROM Processes WHERE id=process; \
+# 			RETURN result; \
+			
+# 		END // \
+# 		DELIMITER ;"
+# DELIMITER //
+# CREATE FUNCTION getDomain (url int) 
+# RETURNS varchar(30)
+# BEGIN 
+# 	DECLARE result varchar(30);
+# 	SELECT domain into result FROM Domains WHERE id=url;
+# 	RETURN result;
+	
+# END //
+# DELIMITER ;
+
+# 		con.query(literal)
+# end
+
+def database_settings
+	con = Mysql.new 'localhost', 'spy', 'db%SPY16'
+	con.query("USE Spy")
+	con.query("CREATE OR REPLACE VIEW Processes_report AS SELECT userName(Processes_log.user_id), \
+		procCommand(Processes_log.process_id), Preferred_processes.time, \
+		Processes_log.elapsed_time, Processes_log.started_at FROM \
+		Processes_log INNER JOIN Preferred_processes ON \
+		Processes_log.user_id = Preferred_processes.user_id AND \
+		Processes_log.process_id = Preferred_processes.process_id \
+		ORDER BY started_at DESC;")
+
+	con.query("CREATE OR REPLACE VIEW Websites_report AS \
+		SELECT DISTINCT userName(user_id), getDomain(domain_id), COUNT(time) \
+		FROM Websites_log GROUP BY user_id, domain_id;")
+	con.close
+end
+
+database_settings
 menu
