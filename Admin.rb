@@ -447,10 +447,12 @@ def print_processes_report
 	con = Mysql.new 'localhost', 'spy', 'db%SPY16'
 	con.query("USE Spy")
 	puts "Aktywność pracowników: "
-	printf "%s\t%-20s\t%s\t%s\t%s\n", 'Imię', 'Proces', 'Zlecony czas', 'Czas zmierzony', 'Rozpoczęto'
-	rs = con.query("SELECT * FROM Processes_report LIMIT 20;")
+	printf "%s\t%-20s\t%s\t%s\n", 'Imię', 'Proces', 'Wypracowany czas', 'Rozpoczęto'
+	rs = con.query("select User, Process, timediff(elapsed_time, time) AS Time_diff, \ 
+		started_at  from Processes_report where started_at \
+		between date_sub(now(), interval 6 day) and now() LIMIT 40;")
 	while row = rs.fetch_row
-		printf "%s\t%-20s\t%s\t%s\t%s\n", row[0], row[1], row[2], row[3], row[4]
+		printf "%s\t%-20s\t%s\t%s\n", row[0], row[1], row[2], row[3]
 	end
 	con.close
 end
@@ -527,6 +529,19 @@ def delete_url
 	con.close	
 end
 
+def fulltext_searching
+	con = Mysql.new 'localhost', 'spy', 'db%SPY16'
+	con.query("USE Spy")
+	print "Podaj szukane tagi: "
+	tags = gets.chomp
+	rs = con.query("CALL searchDescription(\'#{tags}\');")
+	printf "%s\t%-20s %s\n", 'ID', 'Nazwa', 'Tagi'
+	while row = rs.fetch_hash
+		printf "%s\t%-20s %s\n", row["id"], row["command"], row["description"]
+	end
+	con.close
+end
+
 
 def menu_helper_proc(pref)
 		puts '1 - dodaj proces [domyślne]'
@@ -569,6 +584,7 @@ def menu
 	puts '7 - Zarządzaj zakazanymi domenami'
 	puts '8 - Raport z aktywności procesów'
 	puts '9 - Raport z aktywności www'
+	puts '10 - Przeszukaj zasoby po opisie'
 
 	input = gets.chomp.to_i
 	case input
@@ -630,58 +646,19 @@ def menu
 	when 8
 		print_processes_report
 	when 9
-		print_www_report			
+		print_www_report	
+	when 10
+		fulltext_searching			
 	else
 		puts "zły wybór"				
 	end
 end
 
-# def sql_functions
-# 	con = Mysql.new 'localhost', 'spy', 'db%SPY16'
-# 	con.query("USE Spy")
-# 	literal =  "DROP FUNCTION IF EXISTS userName; \ 
-# 		DELIMITER // \ 
-# 		CREATE FUNCTION userName (user int) \ 
-# 		RETURNS varchar(30) \ 
-# 		BEGIN  \ 
-# 			DECLARE result varchar(30); \ 
-# 			SELECT name into result FROM Users WHERE id=user; \
-# 			RETURN result; \
-			
-# 		END // \
-# 		DELIMITER ; \
-
-
-# 		DROP FUNCTION IF EXISTS procCommand; \
-# 		DELIMITER // \
-# 		CREATE FUNCTION procCommand (process int) \ 
-# 		RETURNS varchar(30) \
-# 		BEGIN \
-# 			DECLARE result varchar(30); \
-# 			SELECT command into result FROM Processes WHERE id=process; \
-# 			RETURN result; \
-			
-# 		END // \
-# 		DELIMITER ;"
-# DELIMITER //
-# CREATE FUNCTION getDomain (url int) 
-# RETURNS varchar(30)
-# BEGIN 
-# 	DECLARE result varchar(30);
-# 	SELECT domain into result FROM Domains WHERE id=url;
-# 	RETURN result;
-	
-# END //
-# DELIMITER ;
-
-# 		con.query(literal)
-# end
-
 def database_settings
 	con = Mysql.new 'localhost', 'spy', 'db%SPY16'
 	con.query("USE Spy")
-	con.query("CREATE OR REPLACE VIEW Processes_report AS SELECT userName(Processes_log.user_id), \
-		procCommand(Processes_log.process_id), Preferred_processes.time, \
+	con.query("CREATE OR REPLACE VIEW Processes_report AS SELECT userName(Processes_log.user_id) AS User, \
+		procCommand(Processes_log.process_id) AS Process, Preferred_processes.time, \
 		Processes_log.elapsed_time, Processes_log.started_at FROM \
 		Processes_log INNER JOIN Preferred_processes ON \
 		Processes_log.user_id = Preferred_processes.user_id AND \
@@ -696,3 +673,5 @@ end
 
 database_settings
 menu
+
+

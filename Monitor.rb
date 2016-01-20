@@ -164,7 +164,6 @@ def monitor(user_id)
 						 VALUES(\'#{user_id}\', \'#{domain[0]}\', \'#{row[1]}\', \'#{row[0]}\');")
 					end
 				end
-				# rs = con.query("SELECT * FROM Domains WHERE \'#{row[1]}\' LIKE \'%\'\'#{domain}\'\'%\');")
 			end
 		 # db.execute("UPDATE moz_historyvisits SET user_id=#{user_id} WHERE visit_date/1000000 > #{session_start_time} AND user_id ISNULL;")
 		 # puts session_start_time
